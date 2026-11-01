@@ -92,6 +92,7 @@ import 'home_view_model.dart';
 import '../../widgets/seerr/seerr_genre_label.dart';
 import '../../widgets/skeleton/skeleton_home_row.dart';
 import '../../widgets/skeleton/skeleton_shimmer.dart';
+import '../../../preference/seerr_preferences.dart';
 
 Color get _homeBackground => AppColorScheme.background;
 
@@ -4504,14 +4505,19 @@ class _ContentRowsState extends State<_ContentRows>
     if (row.id == 'merged_calendar' || row.id == 'radarr_calendar' || row.id == 'sonarr_calendar') {
       return 'Radarr and Sonarr Calendars';
     }
-    if (row.id.startsWith('seerr_')) return l10n.seerrDiscoveryRows;
+    if (row.id.startsWith('seerr_')) return seerrBrand(l10n.seerrDiscoveryRows);
     if (row.id.startsWith('tmdb_')) return 'TMDB Lists';
     if (row.id.startsWith('imdb_')) return 'IMDb List';
     if (row.id == 'seasonal') return l10n.seasonalRowSubtitle;
 
     final config = widget.prefs.homeSectionsConfig.firstWhereOrNull((c) => c.stableId == row.id);
     if (config != null && config.pluginSource == HomeSectionPluginSource.seerr) {
-      return l10n.seerrDiscoveryRows;
+      return seerrBrand(l10n.seerrDiscoveryRows);
+    }
+    if (config != null &&
+        config.isPluginDynamic &&
+        config.pluginSource == HomeSectionPluginSource.server) {
+      return l10n.siloServerRowSubtitle;
     }
     if (config != null && config.pluginSource == HomeSectionPluginSource.custom) {
       Map<String, dynamic> rowConfig = {};
@@ -5272,6 +5278,8 @@ class _ContentRowsState extends State<_ContentRows>
     required AppLocalizations l10n,
   }) {
     final suppressFocusGlow = ThemeRegistry.active.borders.focusGlow.isNotEmpty;
+    final hideWatchProgress = prefs.get(UserPreferences.hideHomeWatchProgress);
+    final hideUnwatchedCount = prefs.get(UserPreferences.hideHomeUnwatchedCount);
     final showMediaTypeBadges = showsMediaTypeBadges(
       prefs.get(UserPreferences.mediaTypeBadgeBehavior),
       row.items,
@@ -5747,8 +5755,8 @@ class _ContentRowsState extends State<_ContentRows>
                     classicHomeLabel: !isRowsV2,
                     isFavorite: item.isFavorite,
                     isPlayed: item.isPlayed,
-                    unplayedCount: item.unplayedItemCount,
-                    playedPercentage: item.playedPercentage,
+                    unplayedCount: hideUnwatchedCount ? null : item.unplayedItemCount,
+                    playedPercentage: hideWatchProgress ? null : item.playedPercentage,
                     watchedBehavior: watchedBehavior,
                     itemType: item.type,
                     seerrMediaType: showMediaTypeBadges ? item.seerrMediaType : null,
